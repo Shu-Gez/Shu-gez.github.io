@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<search>
+  <entry>
+    <title>P2607题解</title>
+    <url>/P2607TJ/</url>
+    <content><![CDATA[<h2 id="前置">前置</h2>
+<p><a href="https://www.luogu.com.cn/problem/P2607">原题链接</a></p>
+<p>建议先做<a href="https://www.luogu.com.cn/problem/P1352">P1352
+没有上司的舞会</a>树形dp板子题，有助于此题的完成。</p>
+<h2 id="题目大意">题目大意</h2>
+<p>给你 $ n $
+个骑士，他们每人都有一个痛恨的人，不能和那个痛恨的人同时作战，当他作战时，他的战斗力是
+$ a_{i} $ ，规划一种布兵方案使得军队战斗力最强。</p>
+<span id="more"></span>
+<h2 id="分析">分析</h2>
+<p>通过阅读题面，可以将这些骑士与他们痛恨人的关系化为一棵树，对于每个人，痛恨的人是他这个节点的父亲，于是，对于以下数据，问题出现了。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">3</span><br><span class="line">10 3</span><br><span class="line">20 1</span><br><span class="line">30 2</span><br></pre></td></tr></table></figure>
+<p>所有骑士形成了一个环，对于这种情况，我们就要破环。</p>
+<blockquote>
+<p>此处做另外说明，对于一个有 $ n $ 边，有 $ n $
+个点的无根树，且每个节点都有父亲的情况下，这个树一定会出现环。</p>
+</blockquote>
+<h2 id="破环">破环</h2>
+<p>破环操作，说白了就是在树上找环并从环上任意一个点切开进行两次树形dp。</p>
+<p>于是我们可以写出以下代码</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;++i) &#123;</span><br><span class="line">    <span class="keyword">if</span>(!v[i]) &#123;</span><br><span class="line">        <span class="built_in">find_c</span>(i);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">//n是骑士的数量，v是访问标记，find_c是接下来要写的找环函数</span></span><br></pre></td></tr></table></figure>
+<p>意思就是对于每一个没有访问过的节点，都对它做一次找环操作。</p>
+<blockquote>
+<p>这里再做一次说明，在此题中，因为每个节点都有父节点，所以任意一个节点
+$ i $
+没有被访问过时，将它作为无根树的根时，它必然在一个环中，所以当一个节点 $
+i $ 不在之前的任意一个环中，它必然在一个新的环中。 其中，</p>
+<p><span class="math display">
+\begin{equation} 1 \leq i \leq n \end{equation}
+</span></p>
+</blockquote>
+<p>找环操作可以参见以下代码，有注释</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> root;<span class="comment">//root为根</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">find_c</span><span class="params">(<span class="type">int</span> n)</span> </span>&#123;</span><br><span class="line">    root=n;</span><br><span class="line">    v[root]=<span class="literal">true</span>;</span><br><span class="line">    <span class="keyword">while</span>(!v[gf[root]]) &#123;</span><br><span class="line">        <span class="comment">//gf[i]指的是i的父节点，也就是i痛恨的人</span></span><br><span class="line">        root=gf[root];</span><br><span class="line">        v[root]=<span class="literal">true</span>;<span class="comment">//标记</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//跳出循环说明找到环</span></span><br><span class="line">    <span class="built_in">dfs</span>();<span class="comment">//进行树形dp</span></span><br><span class="line">&#125;<span class="comment">//找环函数</span></span><br></pre></td></tr></table></figure>
+<h2 id="树形dp">树形dp</h2>
+<p>这里几乎就是树形dp的模板了，只需要注意代码中的关键点。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="type">int</span> dp[Maxn][<span class="number">2</span>]=&#123;&#125;;<span class="comment">//第二维表示选或不选</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">dfs2</span><span class="params">(<span class="type">int</span> pt)</span> </span>&#123;</span><br><span class="line">    v[pt]=<span class="literal">true</span>;</span><br><span class="line">    dp[pt][<span class="number">0</span>]=<span class="number">0</span>;</span><br><span class="line">    dp[pt][<span class="number">1</span>]=a[pt];<span class="comment">//这位战士的战斗力</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;v[pt].<span class="built_in">size</span>();++i) &#123;</span><br><span class="line">        <span class="keyword">if</span>(v[pt][i]!=root) &#123;<span class="comment">//注意此处，从root处切开！！！</span></span><br><span class="line">            <span class="built_in">dfs2</span>(v[pt][i]);</span><br><span class="line">            dp[pt][<span class="number">0</span>]+=<span class="built_in">max</span>(dp[v[pt][i]][<span class="number">1</span>],dp[v[pt][i]][<span class="number">0</span>]);</span><br><span class="line">            dp[pt][<span class="number">1</span>]+=dp[v[pt][i]][<span class="number">0</span>];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            dp[v[pt][i]][<span class="number">1</span>]=<span class="number">-1</span>&lt;&lt;<span class="number">20</span>;</span><br><span class="line">        &#125;      </span><br><span class="line">    &#125;<span class="comment">//访问所有的子节点    </span></span><br><span class="line">&#125;<span class="comment">//树形dp模板</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">dfs</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> ans=<span class="number">0</span>;</span><br><span class="line">    <span class="built_in">dfs2</span>(root);</span><br><span class="line">    ans=<span class="built_in">max</span>(dp[root][<span class="number">0</span>],dp[root][<span class="number">1</span>]);</span><br><span class="line">    root=gf[root];</span><br><span class="line">    <span class="built_in">dfs2</span>(root);</span><br><span class="line">    sum+=ans;<span class="comment">//sum是最后输出的答案</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">简而言之，就是从root处切开使得树变为两个连通块，然后对两个连通块做树形dp；</span></span><br><span class="line"><span class="comment">最后在两个连通块中找最大战力即可。</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+<p>这个思路可以过此题，如果本文有错误或不妥之处，请私信<a
+href="https://luogu.com.cn/user/556013">_Shu</a>。</p>
+]]></content>
+      <tags>
+        <tag>题解</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>P1352题解</title>
+    <url>/P1352TJ/</url>
+    <content><![CDATA[<h2 id="前置">前置</h2>
+<p><a href="https://www.luogu.com.cn/problem/P1352">原题链接</a></p>
+<p><a href="https://oi-wiki.org/dp/tree/">树形dp学习资料-OI wiki</a></p>
+<h2 id="题目大意">题目大意</h2>
+<p>有 $ n $
+个人，每个人有一个上司，当他不和他的上司一起跳舞时，他会有一个快乐值，求当一些人一起跳舞时，所有人的快乐值总和最大值。</p>
+<span id="more"></span>
+<h2 id="分析">分析</h2>
+<blockquote>
+<p>且给出的关系一定是一棵树。</p>
+</blockquote>
+<p>题面中的这个信息可以让我们知道这是一道树形dp的模板题，每个人的上司就是这个人的父节点。</p>
+<h2 id="树形dp">树形dp</h2>
+<h3 id="基本思路">基本思路</h3>
+<p>我们用 <code>dp[i][0]</code> 表示不选该节点时的最大快乐值， 用
+<code>dp[i][1]</code>
+表示选该节点时的最大快乐值，用<code>mc[i]</code>表示该人的快乐值。</p>
+<p>可以得到以下式子：</p>
+<p><span class="math display">\begin{equation}
+dp[i][0]= \sum _{j是i的子节点} \max (dp[j][0],dp[j][1])~~~
+\end{equation}</span></p>
+<p><span class="math display">\begin{equation}
+dp[i][1]= mc[i] + \sum _{j是i的子节点} dp[j][0]~~~
+\end{equation}</span></p>
+<p>这就是树形dp的基本实现。</p>
+<h3 id="选根">选根</h3>
+<p>和一般的树形dp题目不一样，这道题不是从每一个节点开始遍历都可以得到答案，需要找没有父节点（没有上司）的节点开始遍历。</p>
+<p>模板题，就不给出代码了。</p>
+<p>这个思路可以过此题，如果本文有错误或不妥之处，请私信<a
+href="https://luogu.com.cn/user/556013">_Shu</a>。</p>
+]]></content>
+      <tags>
+        <tag>题解</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Hello World</title>
+    <url>/hello-world/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very
+first post. Check <a href="https://hexo.io/docs/">documentation</a> for
+more info. If you get any problems when using Hexo, you can find the
+answer in <a
+href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or
+you can ask me on <a
+href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+<h2 id="quick-start">Quick Start</h2>
+<h3 id="create-a-new-post">Create a new post</h3>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+<p>More info: <a
+href="https://hexo.io/docs/writing.html">Writing</a></p>
+<h3 id="run-server">Run server</h3>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
+<h3 id="generate-static-files">Generate static files</h3>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+<p>More info: <a
+href="https://hexo.io/docs/generating.html">Generating</a></p>
+<h3 id="deploy-to-remote-sites">Deploy to remote sites</h3>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+<p>More info: <a
+href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
+]]></content>
+  </entry>
+</search>
